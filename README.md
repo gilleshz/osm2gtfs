@@ -52,7 +52,7 @@ osm2gtfs --query 'relation[route=tram](48.5,7.7,48.6,7.8);out geom;' --output gt
 | `--query QUERY` | Raw Overpass QL query |
 | `--output DIR` | Output directory for GTFS files |
 | `--zip` | Also produce a GTFS zip archive |
-| `--overpass-url URL` | Overpass API endpoint |
+| `--overpass-urls URLS` | Comma-separated Overpass API mirrors, tried in order |
 | `--timeout SEC` | Request timeout in seconds (default 120) |
 | `--snap-distance M` | Stop deduplication radius in metres (default 35) |
 | `--max-gap M` | Maximum bridgeable gap between way segments in metres (default 100) |

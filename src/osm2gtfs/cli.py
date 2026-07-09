@@ -83,7 +83,12 @@ def _build_parser() -> argparse.ArgumentParser:
 
     # Overpass.
     net = parser.add_argument_group("network")
-    net.add_argument("--overpass-url", type=str, default=None, help="Overpass API endpoint")
+    net.add_argument(
+        "--overpass-urls",
+        type=str,
+        default=None,
+        help="comma-separated Overpass API mirrors (tried in order)",
+    )
     net.add_argument("--timeout", type=int, default=None, help="request timeout in seconds")
 
     # Agency.
@@ -134,7 +139,11 @@ def main(argv: list[str] | None = None) -> None:
     # Build config: defaults -> env -> CLI.
     cli_overrides: dict[str, Any] = {}
     cli_key_map = {
-        "overpass_url": args.overpass_url,
+        "overpass_urls": (
+            [u.strip() for u in args.overpass_urls.split(",") if u.strip()]
+            if args.overpass_urls
+            else None
+        ),
         "timeout": args.timeout,
         "snap_distance_m": args.snap_distance,
         "max_gap_m": args.max_gap,

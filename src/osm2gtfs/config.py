@@ -9,7 +9,7 @@ Precedence: CLI flags > environment variables > defaults.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 
@@ -45,6 +45,9 @@ def _env_bool(name: str, default: bool) -> bool:
     return raw.strip().lower() in ("1", "true", "yes")
 
 
+_DEFAULT_MIRRORS = ["https://overpass-api.de/api/interpreter"]
+
+
 @dataclass(frozen=True)
 class Config:
     """Immutable configuration for an osm2gtfs run.
@@ -52,7 +55,7 @@ class Config:
     All distance values are in metres.
     """
 
-    overpass_url: str = "https://overpass-api.de/api/interpreter"
+    overpass_urls: list[str] = field(default_factory=lambda: list(_DEFAULT_MIRRORS))
     timeout: int = 120
     snap_distance_m: float = 35.0
     max_gap_m: float = 100.0
@@ -69,8 +72,14 @@ class Config:
     @classmethod
     def from_env(cls) -> Config:
         """Build a ``Config`` with ``OSM2GTFS_*`` environment variables overlaid on defaults."""
+        mirrors_raw = os.environ.get("OVERPASS_MIRRORS")
+        mirrors = (
+            [u.strip() for u in mirrors_raw.split(",") if u.strip()]
+            if mirrors_raw
+            else list(_DEFAULT_MIRRORS)
+        )
         return cls(
-            overpass_url=_env_str("OSM2GTFS_OVERPASS_URL", cls.overpass_url),
+            overpass_urls=mirrors,
             timeout=_env_int("OSM2GTFS_TIMEOUT", cls.timeout),
             snap_distance_m=_env_float("OSM2GTFS_SNAP_DISTANCE_M", cls.snap_distance_m),
             max_gap_m=_env_float("OSM2GTFS_MAX_GAP_M", cls.max_gap_m),

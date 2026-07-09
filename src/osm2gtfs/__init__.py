@@ -57,7 +57,7 @@ def build_gtfs(selection: Selection, config: Config) -> dict[str, int]:
     Returns a summary dict with keys ``routes``, ``trips``, ``stops``, and
     ``shape_points``.
     """
-    elements = fetch_elements(selection, config.overpass_url, config.timeout)
+    elements = fetch_elements(selection, config.overpass_urls, config.timeout)
     relations = [el for el in elements if el.get("type") == "relation"]
 
     # Collect stop/platform node ids for the name-resolution pass.
@@ -69,7 +69,7 @@ def build_gtfs(selection: Selection, config: Config) -> dict[str, int]:
                 if ref is not None:
                     all_node_ids.add(ref)
 
-    node_tags = fetch_node_tags(list(all_node_ids), config.overpass_url, config.timeout)
+    node_tags = fetch_node_tags(list(all_node_ids), config.overpass_urls, config.timeout)
 
     stop_registry = StopRegistry(snap_distance_m=config.snap_distance_m)
     stop_node_registry: list[tuple[int, str]] = []  # (node_id, stop_id)

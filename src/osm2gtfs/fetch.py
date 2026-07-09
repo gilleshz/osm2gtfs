@@ -94,25 +94,44 @@ def _build_overpass_query(selection: Selection, timeout: int) -> str:
     raise TypeError(f"unknown selection type: {type(selection).__name__}")
 
 
+def _overpass_post(
+    urls: list[str],
+    data: dict[str, str],
+    timeout: float,
+) -> dict[str, Any]:
+    """POST *data* to Overpass, trying each URL in order.
+
+    Returns the parsed JSON response from the first mirror that responds
+    successfully. Raises ``httpx.HTTPError`` if all mirrors fail.
+    """
+    last_error: Exception | None = None
+    for url in urls:
+        sys.stderr.write(f"trying overpass: {url}\n")
+        try:
+            resp = httpx.post(url, data=data, timeout=timeout)
+            resp.raise_for_status()
+            result: dict[str, Any] = resp.json()
+            return result
+        except httpx.HTTPError as exc:
+            last_error = exc
+            sys.stderr.write(f"overpass mirror failed: {url} ({exc})\n")
+    raise httpx.HTTPError(f"all {len(urls)} overpass mirrors failed") from last_error
+
+
 def fetch_elements(
     selection: Selection,
-    overpass_url: str = "https://overpass-api.de/api/interpreter",
+    overpass_urls: list[str] | None = None,
     timeout: int = 120,
 ) -> list[dict[str, Any]]:
     """Fetch OSM elements from the Overpass API for the given *selection*.
 
-    Raises ``httpx.HTTPError`` on network or HTTP errors.
+    Tries each URL in *overpass_urls* in order. Raises ``httpx.HTTPError``
+    if all mirrors fail.
     """
+    if overpass_urls is None:
+        overpass_urls = ["https://overpass-api.de/api/interpreter"]
     query = _build_overpass_query(selection, timeout)
-    sys.stderr.write(f"fetching from {overpass_url} ...\n")
-
-    resp = httpx.post(
-        overpass_url,
-        data={"data": query},
-        timeout=float(timeout + 30),
-    )
-    resp.raise_for_status()
-    data = resp.json()
+    data = _overpass_post(overpass_urls, {"data": query}, float(timeout + 30))
     if "elements" not in data:
         raise ValueError(f"unexpected Overpass response (missing 'elements'): {list(data.keys())}")
     return list(data["elements"])
@@ -120,26 +139,22 @@ def fetch_elements(
 
 def fetch_node_tags(
     node_ids: list[int],
-    overpass_url: str = "https://overpass-api.de/api/interpreter",
+    overpass_urls: list[str] | None = None,
     timeout: int = 120,
 ) -> dict[int, dict[str, str]]:
     """Fetch tags for the given OSM node ids.
 
-    Returns a mapping from node id to its ``tags`` dict.
+    Tries each URL in *overpass_urls* in order. Returns a mapping from node
+    id to its ``tags`` dict.
     """
     if not node_ids:
         return {}
+    if overpass_urls is None:
+        overpass_urls = ["https://overpass-api.de/api/interpreter"]
 
     ids_csv = ",".join(str(n) for n in node_ids)
     query = f"[out:json][timeout:{timeout}];node(id:{ids_csv});out;"
-
-    resp = httpx.post(
-        overpass_url,
-        data={"data": query},
-        timeout=float(timeout + 30),
-    )
-    resp.raise_for_status()
-    data = resp.json()
+    data = _overpass_post(overpass_urls, {"data": query}, float(timeout + 30))
 
     result: dict[int, dict[str, str]] = {}
     for element in data.get("elements", []):

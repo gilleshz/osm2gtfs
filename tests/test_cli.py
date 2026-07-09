@@ -73,7 +73,7 @@ class TestParser:
         )
         assert args.agency_name == "Test"
 
-    def test_overpass_flags(self):
+    def test_overpass_urls_flag(self):
         parser = _build_parser()
         args = parser.parse_args(
             [
@@ -81,13 +81,13 @@ class TestParser:
                 "1",
                 "--output",
                 "out",
-                "--overpass-url",
-                "https://overpass.example.com/api/interpreter",
+                "--overpass-urls",
+                "https://o1.example.com,https://o2.example.com",
                 "--timeout",
                 "60",
             ]
         )
-        assert args.overpass_url == "https://overpass.example.com/api/interpreter"
+        assert args.overpass_urls == "https://o1.example.com,https://o2.example.com"
         assert args.timeout == 60
 
     def test_zip_flag(self):
