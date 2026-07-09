@@ -1,0 +1,166 @@
+[
+  {
+    "type": "relation",
+    "id": 1001,
+    "tags": {
+      "route": "tram",
+      "ref": "A",
+      "name": "Tram A - Northbound",
+      "network": "CTS",
+      "operator": "CTS",
+      "colour": "#FF0000"
+    },
+    "members": [
+      {"type": "way", "ref": 2001, "role": "", "geometry": [
+        {"lon": 7.7500, "lat": 48.5800}, {"lon": 7.7510, "lat": 48.5810}, {"lon": 7.7520, "lat": 48.5820}
+      ]},
+      {"type": "way", "ref": 2002, "role": "", "geometry": [
+        {"lon": 7.7520, "lat": 48.5820}, {"lon": 7.7530, "lat": 48.5830}, {"lon": 7.7540, "lat": 48.5840}
+      ]},
+      {"type": "node", "ref": 3001, "role": "stop", "lon": 7.7500, "lat": 48.5800},
+      {"type": "node", "ref": 3002, "role": "stop", "lon": 7.7520, "lat": 48.5820},
+      {"type": "node", "ref": 3003, "role": "stop", "lon": 7.7540, "lat": 48.5840}
+    ]
+  },
+  {
+    "type": "relation",
+    "id": 1002,
+    "tags": {
+      "route": "tram",
+      "ref": "A",
+      "name": "Tram A - Southbound",
+      "network": "CTS",
+      "operator": "CTS",
+      "colour": "#FF0000"
+    },
+    "members": [
+      {"type": "way", "ref": 2003, "role": "", "geometry": [
+        {"lon": 7.7540, "lat": 48.5840}, {"lon": 7.7530, "lat": 48.5830}, {"lon": 7.7520, "lat": 48.5820}
+      ]},
+      {"type": "way", "ref": 2004, "role": "", "geometry": [
+        {"lon": 7.7520, "lat": 48.5820}, {"lon": 7.7510, "lat": 48.5810}, {"lon": 7.7500, "lat": 48.5800}
+      ]},
+      {"type": "node", "ref": 3003, "role": "stop", "lon": 7.7540, "lat": 48.5840},
+      {"type": "node", "ref": 3002, "role": "stop", "lon": 7.7520, "lat": 48.5820},
+      {"type": "node", "ref": 3001, "role": "stop", "lon": 7.7500, "lat": 48.5800}
+    ]
+  },
+  {
+    "type": "relation",
+    "id": 1003,
+    "tags": {
+      "route": "bus",
+      "ref": "42",
+      "name": "Bus 42",
+      "network": "CTS",
+      "operator": "CTS",
+      "colour": "#0000FF"
+    },
+    "members": [
+      {"type": "way", "ref": 2005, "role": "", "geometry": [
+        {"lon": 7.7600, "lat": 48.5900}, {"lon": 7.7610, "lat": 48.5910}, {"lon": 7.7620, "lat": 48.5920}
+      ]},
+      {"type": "node", "ref": 3004, "role": "stop", "lon": 7.7600, "lat": 48.5900},
+      {"type": "node", "ref": 3005, "role": "stop", "lon": 7.7620, "lat": 48.5920}
+    ]
+  },
+  {
+    "type": "relation",
+    "id": 1004,
+    "tags": {
+      "route": "bus",
+      "ref": "43",
+      "name": "Bus 43 - with platform way",
+      "network": "CTS",
+      "operator": "CTS",
+      "colour": "#00FF00"
+    },
+    "members": [
+      {"type": "way", "ref": 2006, "role": "", "geometry": [
+        {"lon": 7.7700, "lat": 48.5930}, {"lon": 7.7710, "lat": 48.5940}
+      ]},
+      {"type": "way", "ref": 2007, "role": "", "geometry": [
+        {"lon": 7.7710, "lat": 48.5940}, {"lon": 7.7720, "lat": 48.5950}
+      ]},
+      {"type": "node", "ref": 3006, "role": "stop", "lon": 7.7700, "lat": 48.5930},
+      {"type": "way", "ref": 2008, "role": "platform", "geometry": [
+        {"lon": 7.7718, "lat": 48.5948}, {"lon": 7.7722, "lat": 48.5952}
+      ]}
+    ]
+  },
+  {
+    "type": "relation",
+    "id": 1005,
+    "tags": {
+      "route": "tram",
+      "ref": "B",
+      "name": "Tram B - Gapped route",
+      "network": "CTS",
+      "operator": "CTS",
+      "colour": "#880088"
+    },
+    "members": [
+      {"type": "way", "ref": 2009, "role": "", "geometry": [
+        {"lon": 7.7800, "lat": 48.5800}, {"lon": 7.7810, "lat": 48.5805}
+      ]},
+      {"type": "way", "ref": 2010, "role": "", "geometry": [
+        {"lon": 7.7813, "lat": 48.5807}, {"lon": 7.7820, "lat": 48.5810}
+      ]},
+      {"type": "node", "ref": 3007, "role": "stop", "lon": 7.7800, "lat": 48.5800},
+      {"type": "node", "ref": 3008, "role": "stop", "lon": 7.7820, "lat": 48.5810}
+    ]
+  },
+  {
+    "type": "relation",
+    "id": 1006,
+    "tags": {
+      "route": "tram",
+      "ref": "C",
+      "name": "Tram C - multi-component after merge",
+      "network": "CTS"
+    },
+    "members": [
+      {"type": "way", "ref": 2011, "role": "", "geometry": [
+        {"lon": 7.7900, "lat": 48.5800}, {"lon": 7.7910, "lat": 48.5810}
+      ]},
+      {"type": "way", "ref": 2012, "role": "", "geometry": [
+        {"lon": 7.7930, "lat": 48.5830}, {"lon": 7.7940, "lat": 48.5840}
+      ]},
+      {"type": "node", "ref": 3009, "role": "stop", "lon": 7.7900, "lat": 48.5800},
+      {"type": "node", "ref": 3010, "role": "stop", "lon": 7.7940, "lat": 48.5840}
+    ]
+  },
+  {
+    "type": "relation",
+    "id": 1007,
+    "tags": {
+      "route": "tram",
+      "ref": "D",
+      "name": "Tram D - no stops",
+      "network": "CTS"
+    },
+    "members": [
+      {"type": "way", "ref": 2013, "role": "", "geometry": [
+        {"lon": 7.8000, "lat": 48.5800}, {"lon": 7.8010, "lat": 48.5810}
+      ]}
+    ]
+  },
+  {
+    "type": "relation",
+    "id": 1008,
+    "tags": {
+      "route": "subway",
+      "ref": "M",
+      "name": "Metro M",
+      "network": "CTS",
+      "colour": "#FF8800"
+    },
+    "members": [
+      {"type": "way", "ref": 2014, "role": "", "geometry": [
+        {"lon": 8.0000, "lat": 49.0000}, {"lon": 8.0010, "lat": 49.0010}, {"lon": 8.0020, "lat": 49.0020}
+      ]},
+      {"type": "node", "ref": 3011, "role": "stop", "lon": 8.0000, "lat": 49.0000},
+      {"type": "node", "ref": 3012, "role": "stop", "lon": 8.0020, "lat": 49.0020}
+    ]
+  }
+]

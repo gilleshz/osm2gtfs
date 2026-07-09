@@ -1,0 +1,14 @@
+[
+  {"type": "node", "id": 3001, "tags": {"name": "Gare Centrale", "ref": "GC"}},
+  {"type": "node", "id": 3002, "tags": {"name": "Place de la Republique"}},
+  {"type": "node", "id": 3003, "tags": {"name": "Universite"}},
+  {"type": "node", "id": 3004, "tags": {"name": "Pont du Rhin"}},
+  {"type": "node", "id": 3005, "tags": {"name": "Port du Rhin"}},
+  {"type": "node", "id": 3006, "tags": {"name": "Jardin Botanique"}},
+  {"type": "node", "id": 3007, "tags": {"name": "Homme de Fer"}},
+  {"type": "node", "id": 3008, "tags": {"name": "Broglie"}},
+  {"type": "node", "id": 3009, "tags": {"name": "Gallia"}},
+  {"type": "node", "id": 3010, "tags": {"name": "Observatoire"}},
+  {"type": "node", "id": 3011, "tags": {"name": "Hauptbahnhof"}},
+  {"type": "node", "id": 3012, "tags": {"ref": "HB"}}
+]
