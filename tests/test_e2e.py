@@ -226,9 +226,7 @@ class TestEndToEnd:
             "members": members,
         }
 
-        monkeypatch.setattr(
-            osm2gtfs, "fetch_elements", lambda *a, **kw: [fake_relation]
-        )
+        monkeypatch.setattr(osm2gtfs, "fetch_elements", lambda *a, **kw: [fake_relation])
         monkeypatch.setattr(osm2gtfs, "fetch_node_tags", lambda *a, **kw: {})
 
         out = tmp_path / "gtfs"
@@ -243,9 +241,7 @@ class TestEndToEnd:
             reader = csv.DictReader(f)
             rows = list(reader)
 
-        assert len(rows) == num_stops, (
-            f"expected {num_stops} stop_times, got {len(rows)}"
-        )
+        assert len(rows) == num_stops, f"expected {num_stops} stop_times, got {len(rows)}"
 
         time_re = __import__("re").compile(r"^(\d{2}):(\d{2}):(\d{2})$")
         for row in rows:
@@ -253,16 +249,13 @@ class TestEndToEnd:
                 val = row[field]
                 m = time_re.match(val)
                 assert m is not None, (
-                    f"stop_sequence {row['stop_sequence']}: "
-                    f"{field} = {val!r} is not HH:MM:SS"
+                    f"stop_sequence {row['stop_sequence']}: {field} = {val!r} is not HH:MM:SS"
                 )
                 hh = int(m.group(1))
                 mm = int(m.group(2))
                 assert 0 <= mm < 60, (
-                    f"stop_sequence {row['stop_sequence']}: "
-                    f"{field} minute = {mm}, must be 0-59"
+                    f"stop_sequence {row['stop_sequence']}: {field} minute = {mm}, must be 0-59"
                 )
                 assert hh >= 8, (
-                    f"stop_sequence {row['stop_sequence']}: "
-                    f"{field} hour = {hh}, expected >= 8"
+                    f"stop_sequence {row['stop_sequence']}: {field} hour = {hh}, expected >= 8"
                 )
