@@ -185,3 +185,84 @@ class TestEndToEnd:
             map_svg = tmp_path / "map.svg"
             if map_svg.exists():
                 assert map_svg.stat().st_size > 0
+
+    def test_long_trip_times_never_overflow_minute_field(self, tmp_path, monkeypatch):
+        import osm2gtfs
+
+        num_stops = 65
+        members = []
+        for i in range(num_stops):
+            lat = 48.58 + i * 0.001
+            lng = 7.75 + i * 0.001
+            members.append(
+                {"type": "node", "ref": 9000 + i, "role": "stop", "lon": lng, "lat": lat}
+            )
+        members.insert(
+            0,
+            {
+                "type": "way",
+                "ref": 8000,
+                "role": "",
+                "geometry": [
+                    {"lon": 7.75, "lat": 48.58},
+                    {
+                        "lon": 7.75 + num_stops * 0.001,
+                        "lat": 48.58 + num_stops * 0.001,
+                    },
+                ],
+            },
+        )
+
+        fake_relation = {
+            "type": "relation",
+            "id": 2001,
+            "tags": {
+                "route": "bus",
+                "ref": "L",
+                "name": "Long Line",
+                "network": "X",
+                "operator": "Y",
+            },
+            "members": members,
+        }
+
+        monkeypatch.setattr(
+            osm2gtfs, "fetch_elements", lambda *a, **kw: [fake_relation]
+        )
+        monkeypatch.setattr(osm2gtfs, "fetch_node_tags", lambda *a, **kw: {})
+
+        out = tmp_path / "gtfs"
+        config = Config(output=str(out))
+        selection = RelationIds(ids=[2001])
+        build_gtfs(selection, config)
+
+        stop_times_path = out / "stop_times.txt"
+        assert stop_times_path.is_file(), "stop_times.txt not written"
+
+        with open(stop_times_path, newline="") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+
+        assert len(rows) == num_stops, (
+            f"expected {num_stops} stop_times, got {len(rows)}"
+        )
+
+        time_re = __import__("re").compile(r"^(\d{2}):(\d{2}):(\d{2})$")
+        for row in rows:
+            for field in ("arrival_time", "departure_time"):
+                val = row[field]
+                m = time_re.match(val)
+                assert m is not None, (
+                    f"stop_sequence {row['stop_sequence']}: "
+                    f"{field} = {val!r} is not HH:MM:SS"
+                )
+                hh = int(m.group(1))
+                mm = int(m.group(2))
+                assert 0 <= mm < 60, (
+                    f"stop_sequence {row['stop_sequence']}: "
+                    f"{field} minute = {mm}, must be 0-59"
+                )
+                assert hh >= 8, (
+                    f"stop_sequence {row['stop_sequence']}: "
+                    f"{field} hour = {hh}, expected >= 8"
+                )

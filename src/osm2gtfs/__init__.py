@@ -179,7 +179,9 @@ def build_gtfs(selection: Selection, config: Config) -> dict[str, int]:
             if node_ref is not None:
                 stop_node_registry.append((node_ref, stop_id))
             mm, ss = divmod(seq * 60, 60)
-            time_str = f"08:{mm:02d}:{ss:02d}"
+            hh, mm = divmod(mm, 60)
+            hh += 8
+            time_str = f"{hh:02d}:{mm:02d}:{ss:02d}"
             stop_times.append(
                 StopTime(
                     trip_id=trip_id,
