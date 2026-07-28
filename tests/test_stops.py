@@ -54,6 +54,39 @@ class TestStopRegistry:
         reg.update_name(sid, "Second")
         assert reg.entries[0].stop_name == "First"
 
+    def test_update_name_ignores_unknown_id(self):
+        reg = StopRegistry()
+        reg.id_for(7.75, 48.58)
+        reg.update_name("S999", "Central")
+        assert reg.entries[0].stop_name == ""
+
+    def test_merges_across_a_cell_boundary(self):
+        reg = StopRegistry(snap_distance_m=35)
+        step = 35 / 6378137 * 180 / 3.141592653589793
+        # Straddle a grid boundary so the pair only merges if neighbours are searched.
+        base = step * 1000
+        sid1 = reg.id_for(base - 1e-7, 48.58)
+        sid2 = reg.id_for(base + 1e-7, 48.58)
+        assert sid1 == sid2
+
+    def test_merges_at_far_eastern_longitude(self):
+        reg = StopRegistry(snap_distance_m=50)
+        sid1 = reg.id_for(179.9990, 60.0)
+        sid2 = reg.id_for(179.9994, 60.0)
+        assert sid1 == sid2
+
+    def test_first_registered_wins_when_several_are_in_range(self):
+        reg = StopRegistry(snap_distance_m=500)
+        first = reg.id_for(7.7500, 48.58, "First")
+        reg.id_for(7.7505, 48.58, "Second")
+        assert reg.id_for(7.7502, 48.58) == first
+
+    def test_distant_stops_dont_merge_at_high_latitude(self):
+        reg = StopRegistry(snap_distance_m=35)
+        sid1 = reg.id_for(20.0, 70.0)
+        sid2 = reg.id_for(20.01, 70.0)
+        assert sid1 != sid2
+
 
 class TestResolveStopNames:
     def test_resolves_names_from_tags(self):
