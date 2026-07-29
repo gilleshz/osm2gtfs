@@ -22,6 +22,21 @@ STOP_ROLES = frozenset(
 WGS84 = Geod(ellps="WGS84")
 
 
+def _gap_to(prev: LineString, comp: LineString) -> tuple[float, LineString]:
+    """Distance from the end of *prev* to the nearer end of *comp*.
+
+    Returns *comp* reversed when its last point is the nearer one, so the caller
+    can always join to ``comp.coords[0]``. Measuring one end but joining to the
+    other draws a straight line the length of the component when it runs backwards.
+    """
+    tail = prev.coords[-1]
+    _, _, to_head = WGS84.inv(tail[0], tail[1], comp.coords[0][0], comp.coords[0][1])
+    _, _, to_tail = WGS84.inv(tail[0], tail[1], comp.coords[-1][0], comp.coords[-1][1])
+    if to_tail < to_head:
+        return to_tail, LineString(list(comp.coords)[::-1])
+    return to_head, comp
+
+
 def stitch_ways(
     members: list[dict[str, Any]],
     stop_roles: frozenset[str] = STOP_ROLES,
@@ -30,8 +45,10 @@ def stitch_ways(
     """Stitch way members of an OSM relation into a single continuous polyline.
 
     Way members whose role is in *stop_roles* are excluded. Runs ``linemerge``
-    on the collected ways. When the result is a ``MultiLineString``, bridges
-    components with straight segments where gaps are within *max_gap_m*.
+    on the collected ways. When the result is a ``MultiLineString``, components
+    are chained while each consecutive gap stays within *max_gap_m*, and the
+    longest chain wins. A wider gap ends the chain instead of being crossed,
+    since concatenating over it invents track that does not exist.
     Returns ``None`` if there is no usable geometry.
     """
     lines: list[LineString] = []
@@ -63,29 +80,18 @@ def stitch_ways(
     main = max(components, key=lambda g: g.length)
     ordered = sorted(components, key=lambda g: main.project(g.centroid))
 
-    bridged = [ordered[0]]
+    chains: list[list[LineString]] = [[ordered[0]]]
     for comp in ordered[1:]:
-        prev = bridged[-1]
-        gap_end_prev = (prev.coords[-1][0], prev.coords[-1][1])
-        gap_start_comp = (comp.coords[0][0], comp.coords[0][1])
-        gap_alt_start = (comp.coords[-1][0], comp.coords[-1][1])
-        _, _, dist_a = WGS84.inv(
-            gap_end_prev[0],
-            gap_end_prev[1],
-            gap_start_comp[0],
-            gap_start_comp[1],
-        )
-        _, _, dist_b = WGS84.inv(
-            gap_end_prev[0],
-            gap_end_prev[1],
-            gap_alt_start[0],
-            gap_alt_start[1],
-        )
-        dist = min(dist_a, dist_b)
-        if dist <= max_gap_m:
-            connector = LineString([gap_end_prev, gap_start_comp])
-            bridged.append(connector)
-        bridged.append(comp)
+        prev = chains[-1][-1]
+        gap, oriented = _gap_to(prev, comp)
+        if gap > max_gap_m:
+            chains.append([comp])
+            continue
+        if gap > 0:
+            chains[-1].append(LineString([prev.coords[-1], oriented.coords[0]]))
+        chains[-1].append(oriented)
+
+    bridged = max(chains, key=lambda chain: sum(part.length for part in chain))
 
     if len(bridged) > 1:
         merged2 = linemerge(MultiLineString(bridged))

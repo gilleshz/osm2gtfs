@@ -87,6 +87,52 @@ class TestStitchWays:
         members = [_way(1, "", [(0, 0)])]
         assert stitch_ways(members) is None
 
+    def test_does_not_cross_a_gap_wider_than_max_gap(self):
+        members = [
+            _way(1, "", [(7.50, 47.00), (7.70, 47.00)]),
+            _way(2, "", [(9.00, 47.00), (9.05, 47.00)]),
+        ]
+        result = stitch_ways(members, max_gap_m=100)
+        assert result is not None
+        assert list(result.coords) == [(7.50, 47.00), (7.70, 47.00)]
+
+    def test_keeps_the_longest_chain_when_a_gap_splits_the_relation(self):
+        members = [
+            _way(1, "", [(7.00, 47.00), (7.01, 47.00)]),
+            _way(2, "", [(8.00, 47.00), (8.20, 47.00)]),
+            _way(3, "", [(8.2001, 47.00), (8.40, 47.00)]),
+        ]
+        result = stitch_ways(members, max_gap_m=100)
+        assert result is not None
+        coords = list(result.coords)
+        assert coords[0] == (8.00, 47.00)
+        assert coords[-1] == (8.40, 47.00)
+
+    def test_bridges_to_the_nearer_end_of_a_backwards_component(self):
+        members = [
+            _way(1, "", [(7.000, 47.00), (7.010, 47.00)]),
+            _way(
+                2,
+                "",
+                [
+                    (7.030, 47.00),
+                    (7.025, 47.00),
+                    (7.020, 47.00),
+                    (7.015, 47.00),
+                    (7.0101, 47.00),
+                ],
+            ),
+        ]
+        result = stitch_ways(members, max_gap_m=100)
+        assert result is not None
+        coords = list(result.coords)
+        assert {coords[0], coords[-1]} == {(7.000, 47.00), (7.030, 47.00)}
+        longest = max(
+            geodesic_distance_m(a[0], a[1], b[0], b[1])
+            for a, b in zip(coords, coords[1:], strict=False)
+        )
+        assert longest < 1000
+
 
 class TestCumulativeGeodesicDistances:
     def test_two_points(self):
