@@ -68,6 +68,7 @@ class Config:
     default_route_type: int = 3
     output_zip: bool = False
     output: str = "gtfs"
+    clip: str = ""
 
     @classmethod
     def from_env(cls) -> Config:

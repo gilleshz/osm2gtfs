@@ -5,11 +5,15 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from shapely.geometry import Point as ShapelyPoint
+
 from osm2gtfs.config import Config
 from osm2gtfs.fetch import Selection, fetch_elements, fetch_node_tags
 from osm2gtfs.geometry import (
     STOP_ROLES,
+    clip_to_boundary,
     cumulative_geodesic_distances,
+    load_clip_boundary,
     project_and_order,
     stitch_ways,
 )
@@ -71,6 +75,8 @@ def build_gtfs(selection: Selection, config: Config) -> dict[str, int]:
 
     node_tags = fetch_node_tags(list(all_node_ids), config.overpass_urls, config.timeout)
 
+    clip_boundary = load_clip_boundary(config.clip) if config.clip else None
+
     stop_registry = StopRegistry(snap_distance_m=config.snap_distance_m)
     stop_node_registry: list[tuple[int, str]] = []  # (node_id, stop_id)
 
@@ -124,6 +130,17 @@ def build_gtfs(selection: Selection, config: Config) -> dict[str, int]:
             sys.stderr.write(f"warning: relation {rel_id}: no usable geometry, skipping\n")
             continue
 
+        if clip_boundary is not None:
+            polyline, dropped = clip_to_boundary(polyline, clip_boundary)
+            if polyline is None:
+                sys.stderr.write(f"warning: relation {rel_id}: outside the clip boundary\n")
+                continue
+            if dropped > 0:
+                sys.stderr.write(
+                    f"warning: relation {rel_id}: route re-enters the boundary, "
+                    f"dropped a disconnected in-boundary piece\n"
+                )
+
         shape_id = f"sh_{rel_id}"
         coords = list(polyline.coords)
         geodesic_dists = cumulative_geodesic_distances(coords)
@@ -155,6 +172,9 @@ def build_gtfs(selection: Selection, config: Config) -> dict[str, int]:
                         stop_infos.append(
                             (sum(lons) / len(lons), sum(lats) / len(lats), member.get("ref"))
                         )
+
+        if clip_boundary is not None:
+            stop_infos = [s for s in stop_infos if clip_boundary.covers(ShapelyPoint(s[0], s[1]))]
 
         if len(stop_infos) < 2:
             sys.stderr.write(f"warning: relation {rel_id}: fewer than 2 stops, skipping\n")

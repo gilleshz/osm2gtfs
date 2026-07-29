@@ -111,6 +111,12 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="maximum bridgeable gap between way components in metres (default 100)",
     )
+    geo.add_argument(
+        "--clip",
+        type=str,
+        default=None,
+        help="path to a GeoJSON polygon; geometry and stops outside it are dropped",
+    )
 
     return parser
 
@@ -152,6 +158,7 @@ def main(argv: list[str] | None = None) -> None:
         "agency_timezone": args.agency_timezone,
         "output_zip": args.output_zip,
         "output": args.output,
+        "clip": args.clip,
     }
     for key, value in cli_key_map.items():
         if value is not None:

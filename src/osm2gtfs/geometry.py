@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 from pyproj import Geod
-from shapely.geometry import LineString, MultiLineString, Point
-from shapely.ops import linemerge
+from shapely.geometry import LineString, MultiLineString, Point, shape
+from shapely.geometry.base import BaseGeometry
+from shapely.ops import linemerge, unary_union
 
 STOP_ROLES = frozenset(
     {
@@ -20,6 +23,43 @@ STOP_ROLES = frozenset(
 )
 
 WGS84 = Geod(ellps="WGS84")
+
+
+def load_clip_boundary(path: str) -> BaseGeometry:
+    """Read a GeoJSON polygon from *path*, accepting a bare geometry, Feature or collection."""
+    raw = json.loads(Path(path).read_text())
+    if raw.get("type") == "FeatureCollection":
+        parts = [shape(f["geometry"]) for f in raw["features"] if f.get("geometry")]
+        if not parts:
+            raise ValueError(f"no geometry in {path}")
+        return unary_union(parts)
+    if raw.get("type") == "Feature":
+        return shape(raw["geometry"])
+    return shape(raw)
+
+
+def clip_to_boundary(
+    polyline: LineString, boundary: BaseGeometry
+) -> tuple[LineString | None, float]:
+    """Keep the longest run of *polyline* that lies inside *boundary*.
+
+    Returns the kept piece and the length of any *other* in-boundary pieces that
+    had to be discarded, in degrees. A route that leaves the boundary and comes
+    back yields several pieces and only the longest is kept, since joining them
+    would draw track through the part that was deliberately excluded. Track
+    outside the boundary is not counted as discarded: dropping it is the point.
+    """
+    clipped = polyline.intersection(boundary)
+    if clipped.is_empty:
+        return None, 0.0
+
+    parts = [clipped] if isinstance(clipped, LineString) else list(getattr(clipped, "geoms", []))
+    usable = [g for g in parts if isinstance(g, LineString) and g.length > 0]
+    if not usable:
+        return None, 0.0
+
+    best = max(usable, key=lambda g: g.length)
+    return best, sum(g.length for g in usable) - best.length
 
 
 def _gap_to(prev: LineString, comp: LineString) -> tuple[float, LineString]:

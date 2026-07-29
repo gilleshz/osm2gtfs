@@ -1,10 +1,14 @@
 """Tests for geometry: way stitching, geodesic distances, stop projection."""
 
-from shapely.geometry import LineString
+import json
+
+from shapely.geometry import LineString, Polygon
 
 from osm2gtfs.geometry import (
+    clip_to_boundary,
     cumulative_geodesic_distances,
     geodesic_distance_m,
+    load_clip_boundary,
     project_and_order,
     stitch_ways,
 )
@@ -132,6 +136,68 @@ class TestStitchWays:
             for a, b in zip(coords, coords[1:], strict=False)
         )
         assert longest < 1000
+
+
+class TestClipToBoundary:
+    BOX = Polygon([(7.0, 47.0), (8.0, 47.0), (8.0, 48.0), (7.0, 48.0)])
+
+    def test_keeps_a_line_fully_inside(self):
+        line = LineString([(7.2, 47.2), (7.8, 47.8)])
+        kept, dropped = clip_to_boundary(line, self.BOX)
+        assert kept is not None
+        assert dropped == 0.0
+        assert kept.length == line.length
+
+    def test_trims_a_line_that_leaves_the_boundary(self):
+        line = LineString([(7.5, 47.5), (9.5, 47.5)])
+        kept, dropped = clip_to_boundary(line, self.BOX)
+        assert kept is not None
+        assert dropped == 0.0
+        assert max(x for x, _ in kept.coords) <= 8.0 + 1e-9
+
+    def test_returns_none_for_a_line_entirely_outside(self):
+        line = LineString([(9.0, 47.5), (9.5, 47.5)])
+        kept, dropped = clip_to_boundary(line, self.BOX)
+        assert kept is None
+        assert dropped == 0.0
+
+    def test_keeps_only_the_longest_piece_when_the_line_re_enters(self):
+        line = LineString([(7.1, 47.5), (7.2, 47.5), (8.5, 47.5), (7.4, 47.6), (7.9, 47.6)])
+        kept, dropped = clip_to_boundary(line, self.BOX)
+        assert kept is not None
+        assert dropped > 0
+        pieces = line.intersection(self.BOX)
+        assert kept.length == max(g.length for g in pieces.geoms)
+
+
+class TestLoadClipBoundary:
+    def test_reads_a_bare_polygon(self, tmp_path):
+        p = tmp_path / "b.geojson"
+        p.write_text(
+            json.dumps({"type": "Polygon", "coordinates": [[[7, 47], [8, 47], [8, 48], [7, 47]]]})
+        )
+        assert load_clip_boundary(str(p)).is_valid
+
+    def test_reads_a_feature_collection(self, tmp_path):
+        p = tmp_path / "b.geojson"
+        p.write_text(
+            json.dumps(
+                {
+                    "type": "FeatureCollection",
+                    "features": [
+                        {
+                            "type": "Feature",
+                            "properties": {},
+                            "geometry": {
+                                "type": "Polygon",
+                                "coordinates": [[[7, 47], [8, 47], [8, 48], [7, 47]]],
+                            },
+                        }
+                    ],
+                }
+            )
+        )
+        assert load_clip_boundary(str(p)).is_valid
 
 
 class TestCumulativeGeodesicDistances:
