@@ -112,6 +112,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="maximum bridgeable gap between way components in metres (default 100)",
     )
     geo.add_argument(
+        "--max-stop-offset",
+        type=float,
+        default=None,
+        help="drop a stop sitting further than this many metres from its shape (default 500)",
+    )
+    geo.add_argument(
         "--clip",
         type=str,
         default=None,
@@ -159,6 +165,7 @@ def main(argv: list[str] | None = None) -> None:
         "output_zip": args.output_zip,
         "output": args.output,
         "clip": args.clip,
+        "max_stop_offset_m": args.max_stop_offset,
     }
     for key, value in cli_key_map.items():
         if value is not None:

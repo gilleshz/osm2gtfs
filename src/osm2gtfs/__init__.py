@@ -181,7 +181,7 @@ def build_gtfs(selection: Selection, config: Config) -> dict[str, int]:
             continue
 
         stop_coords = [(lon, lat) for lon, lat, _ in stop_infos]
-        projected = project_and_order(polyline, stop_coords)
+        projected = project_and_order(polyline, stop_coords, config.max_stop_offset_m)
 
         if len(projected) < 2:
             sys.stderr.write(

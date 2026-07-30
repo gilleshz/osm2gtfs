@@ -171,18 +171,28 @@ def cumulative_geodesic_distances(
 def project_and_order(
     polyline: LineString,
     stops: list[tuple[float, float]],
+    max_offset_m: float | None = None,
 ) -> list[tuple[float, float, float]]:
     """Project *stops* onto *polyline* and return them ordered by distance along it.
 
     Each element of *stops* is ``(lon, lat)``. Returns ``(distance_degrees, lon, lat)``
     tuples sorted by distance. The degree-distance is for ordering only; use
     ``cumulative_geodesic_distances`` for ``shape_dist_traveled`` values.
+
+    A stop further than *max_offset_m* from the polyline is dropped rather than
+    given an offset along it. The pair would otherwise claim a stop sits at a
+    point on the shape that is nowhere near it, and a consumer that trusts both
+    the coordinates and the offset draws a straight line between the two.
     """
     projected: list[tuple[float, float, float]] = []
     seen: set[tuple[float, float, float]] = set()
     for lon, lat in stops:
         pt = Point(lon, lat)
         dist_deg = polyline.project(pt)
+        if max_offset_m is not None:
+            on_line = polyline.interpolate(dist_deg)
+            if geodesic_distance_m(lon, lat, on_line.x, on_line.y) > max_offset_m:
+                continue
         key = (round(dist_deg, 6), lon, lat)
         if key not in seen:
             seen.add(key)

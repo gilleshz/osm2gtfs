@@ -59,6 +59,7 @@ class Config:
     timeout: int = 120
     snap_distance_m: float = 35.0
     max_gap_m: float = 100.0
+    max_stop_offset_m: float = 500.0
     agency_id: str = "OSM"
     agency_name: str = "OpenStreetMap"
     agency_url: str = "https://osm.org"

@@ -138,6 +138,31 @@ class TestStitchWays:
         assert longest < 1000
 
 
+class TestProjectAndOrderOffset:
+    LINE = LineString([(7.0, 47.0), (7.1, 47.0)])
+
+    def test_keeps_a_stop_beside_the_line(self):
+        out = project_and_order(self.LINE, [(7.05, 47.0005)], max_offset_m=500)
+        assert len(out) == 1
+
+    def test_drops_a_stop_far_from_the_line(self):
+        out = project_and_order(self.LINE, [(7.05, 47.5)], max_offset_m=500)
+        assert out == []
+
+    def test_drops_a_stop_beyond_the_end_of_the_line(self):
+        out = project_and_order(self.LINE, [(8.0, 47.0)], max_offset_m=500)
+        assert out == []
+
+    def test_keeps_everything_when_no_limit_is_given(self):
+        out = project_and_order(self.LINE, [(7.05, 47.5), (8.0, 47.0)])
+        assert len(out) == 2
+
+    def test_reports_original_coordinates_not_the_projection(self):
+        out = project_and_order(self.LINE, [(7.05, 47.0005)], max_offset_m=500)
+        assert out[0][1] == 7.05
+        assert out[0][2] == 47.0005
+
+
 class TestClipToBoundary:
     BOX = Polygon([(7.0, 47.0), (8.0, 47.0), (8.0, 48.0), (7.0, 48.0)])
 
